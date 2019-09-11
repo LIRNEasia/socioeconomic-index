@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # Read in the data
-censusData <- lapply(
+census_data <- lapply(
     list.files("data"),
     function(filename) {
         read.csv(
@@ -23,11 +23,11 @@ censusData <- lapply(
 )
 
 # Merge the census datasets into a single large dataset
-censusData <- Reduce(
+census_data <- Reduce(
     function(x, y) {
         inner_join(x, y, by = c("code_7"))
     },
-    censusData
+    census_data
 ) %>%
     mutate(code_4 = as.integer(substr(code_7, 1, 4)))
 
@@ -35,10 +35,10 @@ censusData <- Reduce(
 # population data
 ## Remove the housing variables as they are redundant
 ## Remove most of the "other" fields as they are ambiguous
-## Remove the age and gender variables as they are not relevant
+## Remove the age and gender variables as they are irrelevant
 datasets <- list(
     "gnd" = list(
-        "household" = censusData %>%
+        "household" = census_data %>%
             select(
                 code_7,
                 starts_with("coo"),
@@ -61,7 +61,7 @@ datasets <- list(
                 -wat_other
             ) %>%
             na.omit(),
-        "population" = censusData %>% 
+        "population" = census_data %>% 
             select(
                 code_7,
                 starts_with("edu"),
@@ -70,7 +70,7 @@ datasets <- list(
             na.omit()
     ),
     "dsd" = list(
-        "household" = censusData %>%
+        "household" = census_data %>%
             group_by(code_4) %>%
             summarise_at(
                 vars(-code_7),
@@ -98,7 +98,7 @@ datasets <- list(
                 -wat_other
             ) %>%
             na.omit(),
-        "population" = censusData %>%
+        "population" = census_data %>%
             group_by(code_4) %>%
             summarise_at(
                 vars(-code_7),
@@ -115,37 +115,37 @@ datasets <- list(
 )
 
 # Conduct principle component analysis on the datasets
-pcaResults <- list()
-firstComps <- list()
+pca_results <- list()
+first_components <- list()
 for(i in names(datasets)) {
     for(j in names(datasets[[i]])) {
         ## Run the analysis
-        pcaResults[[i]][[j]] <- prcomp(
+        pca_results[[i]][[j]] <- prcomp(
             datasets[[i]][[j]] %>% 
                 select(-one_of(c("code_7", "code_4"))), 
             scale. = TRUE
         )
         
         ## Plot the results
-        var <- pcaResults[[i]][[j]]$sdev^2
-        biplot(pcaResults[[i]][[j]], scale = 0)
+        var <- pca_results[[i]][[j]]$sdev^2
+        biplot(pca_results[[i]][[j]], scale = 0)
         plot(var/sum(var), type = "b")
         plot(cumsum(var), type = "b")
         
         ## Extract the first principle component
-        firstComps[[i]][[j]] <- pcaResults[[i]][[j]]$rotation[, "PC1"]
-        firstComps[[i]][[j]]["code_7"] <- 1
-        firstComps[[i]][[j]]["code_4"] <- 1
+        first_components[[i]][[j]] <- pca_results[[i]][[j]]$rotation[, "PC1"]
+        first_components[[i]][[j]]["code_7"] <- 1
+        first_components[[i]][[j]]["code_4"] <- 1
     }
 }
 rm(i, j, var)
 
 # Calculate the socioeconomic index for each dataset
-## First normalise the datasets
-normDatasets <- list()
+## First normalize the datasets
+normalized_datasets <- list()
 for(i in names(datasets)) {
     for(j in names(datasets[[i]])) {
-        normDatasets[[i]][[j]] <- datasets[[i]][[j]] %>%
+        normalized_datasets[[i]][[j]] <- datasets[[i]][[j]] %>%
             mutate_at(
                 vars(-one_of(c("code_7", "code_4"))), 
                 funs((. - min(.))/(max(.) - min(.)))
@@ -156,13 +156,13 @@ rm(i, j)
 
 ## Calculate the first principle component for each dataset
 indexes <- list()
-for(i in names(normDatasets)) {
-    for(j in names(normDatasets[[i]])) {
+for(i in names(normalized_datasets)) {
+    for(j in names(normalized_datasets[[i]])) {
         indexes[[i]][[j]] <- as.data.frame(
             mapply(
                 '*', 
-                normDatasets[[i]][[j]], 
-                firstComps[[i]][[j]][names(normDatasets[[i]][[j]])]
+                normalized_datasets[[i]][[j]], 
+                first_components[[i]][[j]][names(normalized_datasets[[i]][[j]])]
             )
         ) %>%
             mutate(
