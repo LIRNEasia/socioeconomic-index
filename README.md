@@ -2,7 +2,7 @@
 A socioeconomic index, also known as a deprivation index, is a single numerical figure that gauges the socioeconomic status of a predefined area. It encompasses multiple socioeconomic characteristics as well as their relative significance. It would allow for direct comparisons of socioeconomic status between regions and would be tremendously useful in identifying patterns and correlations between socioeconomic status and other attributes. This is our attempt at creating a socioeconomic index for Sri Lanka.
 
 ## Dataset
-The dataset we used was the [2011 national census datasets](http://www.statistics.gov.lk/PopHouSat/CPH2011/index.php?fileName=Activities/TentativelistofPublications). This repository contains a [cleaned version](data) of these datasets.
+The dataset we used was the [2011 national census datasets](http://www.statistics.gov.lk/PopHouSat/CPH2011/index.php?fileName=Activities/TentativelistofPublications). This repository contains a [cleaned version](/data) of these datasets.
 
 _Note: The 2011 national census datasets are only available as a summary of counts at the Grama Niladhari Division (GND) level. The original categorical variables surveyed at the household level have been converted to binary variables and aggregated for each GND. This obscures certain correlations between variables, therefore our results are suboptimal._
 
@@ -19,6 +19,10 @@ This [blog post](blogpostlink) contains a thorough description of our process. I
 7. Sum the above scores for each GND to get the socioeconomic index.
 
 ## Results
-We separated the GNDs into seven quantiles and plotted their socioeconomic index as a choropleth map. These are our results using the household and population datasets respectively.
-![Socioeconomic Index using the household dataset](/results/gnd_household.pdf)
-![Socioeconomic Index using the population dataset](/results/gnd_population.pdf)
+We separated the GNDs into seven quantiles and plotted their socioeconomic index as a choropleth map. These are our results using the household and population datasets.
+
+### Household Dataset
+![Socioeconomic Index using the household dataset](/results/gnd_household.png)
+
+### Population Dataset
+![Socioeconomic Index using the population dataset](/results/gnd_population.png)
