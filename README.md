@@ -17,3 +17,8 @@ This [blog post](blogpostlink) contains a thorough description of our process. I
 5. Extract the weights given by the first principal component.
 6. Multiply the normalized dataset by these weights.
 7. Sum the above scores for each GND to get the socioeconomic index.
+
+## Results
+We separated the GNDs into seven quantiles and plotted their socioeconomic index as a choropleth map. These are our results using the household and population datasets respectively.
+![Socioeconomic Index using the household dataset](/results/gnd_household.pdf)
+![Socioeconomic Index using the population dataset](/results/gnd_population.pdf)
