@@ -15,6 +15,9 @@ census_data <- lapply(
                 -gnd_number,
                 -total
             ) %>%
+            mutate(
+                total = rowSums(.[-1])
+            ) %>%
             rename_at(
                 vars(-code_7),
                 list(~paste(substr(filename, 1, 3), ., sep = "_"))
@@ -50,6 +53,15 @@ datasets <- list(
                 starts_with("toi"),
                 starts_with("wal"),
                 starts_with("wat")
+            ) %>%
+            mutate(
+                coo_total = coo_total - coo_other,
+                flo_total = flo_total - flo_other,
+                lig_total = lig_total - lig_other,
+                roo_total = roo_total - roo_other,
+                ten_total = ten_total - ten_other,
+                wal_total = wal_total - wal_other,
+                wat_total = wat_total - wat_other
             ) %>%
             select(
                 -coo_other,
@@ -88,6 +100,15 @@ datasets <- list(
                 starts_with("wal"),
                 starts_with("wat")
             ) %>%
+            mutate(
+                coo_total = coo_total - coo_other,
+                flo_total = flo_total - flo_other,
+                lig_total = lig_total - lig_other,
+                roo_total = roo_total - roo_other,
+                ten_total = ten_total - ten_other,
+                wal_total = wal_total - wal_other,
+                wat_total = wat_total - wat_other
+            ) %>%
             select(
                 -coo_other,
                 -flo_other,
@@ -114,14 +135,34 @@ datasets <- list(
     )
 )
 
-# Conduct principle component analysis on the datasets
+# Normalize the datasets with respect to category within each GND
+normalized_datasets <- datasets
+categories <- unique(substr(names(census_data), 1, 3))[-1]
+for(i in names(normalized_datasets)) {
+    for(j in names(normalized_datasets[[i]])) {
+        for(k in categories) {
+            normalized_datasets[[i]][[j]] <- normalized_datasets[[i]][[j]] %>%
+                mutate_at(
+                    vars(starts_with(k)), 
+                    list(~. / .data[[paste(k, "total", sep = "_")]])
+                )
+        }
+        normalized_datasets[[i]][[j]] <- normalized_datasets[[i]][[j]] %>%
+            select(-ends_with("total"))
+    }
+}
+normalized_datasets[[1]][[2]] <- normalized_datasets[[1]][[2]] %>% 
+    mutate_all(~replace(., is.na(.), 0))
+rm(categories, i, j, k)
+
+# Conduct principle component analysis on the normalized datasets
 pca_results <- list()
 first_components <- list()
-for(i in names(datasets)) {
-    for(j in names(datasets[[i]])) {
+for(i in names(normalized_datasets)) {
+    for(j in names(normalized_datasets[[i]])) {
         ## Run the analysis
         pca_results[[i]][[j]] <- prcomp(
-            datasets[[i]][[j]] %>% 
+            normalized_datasets[[i]][[j]] %>% 
                 select(-one_of(c("code_7", "code_4"))), 
             scale. = TRUE
         )
@@ -130,7 +171,7 @@ for(i in names(datasets)) {
         var <- pca_results[[i]][[j]]$sdev^2
         biplot(pca_results[[i]][[j]], scale = 0)
         plot(var/sum(var), type = "b")
-        plot(cumsum(var), type = "b")
+        plot(cumsum(var/sum(var)), type = "b")
         
         ## Extract the first principle component
         first_components[[i]][[j]] <- pca_results[[i]][[j]]$rotation[, "PC1"]
@@ -141,20 +182,6 @@ for(i in names(datasets)) {
 rm(i, j, var)
 
 # Calculate the socioeconomic index for each dataset
-## First normalize the datasets
-normalized_datasets <- list()
-for(i in names(datasets)) {
-    for(j in names(datasets[[i]])) {
-        normalized_datasets[[i]][[j]] <- datasets[[i]][[j]] %>%
-            mutate_at(
-                vars(-one_of(c("code_7", "code_4"))), 
-                funs((. - min(.))/(max(.) - min(.)))
-            )    
-    }
-}
-rm(i, j)
-
-## Calculate the first principle component for each dataset
 indexes <- list()
 for(i in names(normalized_datasets)) {
     for(j in names(normalized_datasets[[i]])) {
