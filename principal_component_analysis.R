@@ -38,6 +38,40 @@ census_data <- Reduce(
 ## Remove most of the "other" fields as they are ambiguous
 ## Remove the age and gender variables as they are irrelevant
 datasets <- list(
+    "combined" = census_data %>%
+        select(
+            code_7,
+            starts_with("coo"),
+            starts_with("edu"),
+            starts_with("emp"),
+            starts_with("flo"),
+            starts_with("lig"),
+            starts_with("roo"),
+            starts_with("str"),
+            starts_with("ten"),
+            starts_with("toi"),
+            starts_with("wal"),
+            starts_with("wat")
+        ) %>%
+        mutate(
+            coo_total = coo_total - coo_other,
+            flo_total = flo_total - flo_other,
+            lig_total = lig_total - lig_other,
+            roo_total = roo_total - roo_other,
+            ten_total = ten_total - ten_other,
+            wal_total = wal_total - wal_other,
+            wat_total = wat_total - wat_other
+        ) %>%
+        select(
+            -coo_other,
+            -flo_other,
+            -lig_other,
+            -roo_other,
+            -ten_other,
+            -wal_other,
+            -wat_other
+        ) %>%
+        na.omit(),
     "household" = census_data %>%
         select(
             code_7,
@@ -97,15 +131,26 @@ normalized_datasets[["population"]] <- normalized_datasets[["population"]] %>%
     mutate_all(~replace(., is.na(.), 0))
 rm(categories, i, j)
 
+# Standardize the datasets with respect to each variable across all GNDs
+standardized_datasets <- list()
+for(i in names(normalized_datasets)) {
+    standardized_datasets[[i]] <- normalized_datasets[[i]] %>%
+        mutate_at(
+            vars(-code_7),
+            list(~scale(.))
+        )
+}
+rm(i)
+
 # Conduct principle component analysis on the normalized datasets
 pca_results <- list()
 first_components <- list()
-for(i in names(normalized_datasets)) {
+for(i in names(standardized_datasets)) {
     ## Run the analysis
     pca_results[[i]] <- prcomp(
-        normalized_datasets[[i]] %>% 
+        standardized_datasets[[i]] %>% 
             select(-code_7), 
-        scale. = TRUE
+        scale. = FALSE
     )
     
     ## Plot the results
@@ -122,12 +167,12 @@ rm(i, var)
 
 # Calculate the socioeconomic index for each dataset
 indexes <- list()
-for(i in names(normalized_datasets)) {
+for(i in names(standardized_datasets)) {
     indexes[[i]] <- as.data.frame(
         mapply(
             '*', 
-            normalized_datasets[[i]], 
-            first_components[[i]][names(normalized_datasets[[i]])]
+            standardized_datasets[[i]], 
+            first_components[[i]][names(standardized_datasets[[i]])]
         )
     ) %>%
         mutate(
