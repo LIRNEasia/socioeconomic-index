@@ -27,7 +27,7 @@ _Note: The 2011 national census datasets are only available as a summary of coun
 ## Methodology
 We employed principal component analysis (PCA) and extracted the first principal component to use as the socioeconomic index. We strongly recommend reading [Vyas and Kumaranayake (2006)](https://doi.org/10.1093/heapol/czl029) for a thorough justification of this method as well as an exploration of alternatives. 
 
-This [blog post](blogpostlink) contains a thorough description of our process. In short, we observed the following procedure:
+This [whitepaper](https://lirneasia.net/2020/01/mapping-poverty-and-wealth-an-alternative-socioeconomic-index-for-sri-lanka/) contains a thorough description of our process. In short, we observed the following procedure:
 1. Curate the dataset to remove variables that are either redundant or non-indicative of socioeconomic status.
 2. Normalize the dataset with respect to each category within each GND.
 3. Standardize each variable.
